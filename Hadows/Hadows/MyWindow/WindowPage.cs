@@ -43,7 +43,6 @@ namespace Hadows.MyWindow
 		void _Init()
 		{
 			_isLoadedItem = false;
-			_isLoadedItem = false;
 		}
 
 		//-------------------------- ▶ EventHandlers
