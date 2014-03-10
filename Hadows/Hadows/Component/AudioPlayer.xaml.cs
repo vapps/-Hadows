@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -22,7 +21,7 @@ namespace Hadows.Component
 	}
 
 
-	public sealed partial class AudioPlayer : UserControl, IComponent, IDisposable, INotifyPropertyChanged
+	public sealed partial class AudioPlayer : UserControl, IComponent, IDisposable
 	{
 		//-------------------------- ▶ Properties
 		public ObservableCollection<Song> Songs { get; set; }
@@ -47,13 +46,12 @@ namespace Hadows.Component
 			{
 				Interval = TimeSpan.FromMilliseconds(500)
 			};
-
 			_updateProgressBarTimer.Tick += _updateProgressBarTimer_Tick;
-
-
 
 			Songs = new ObservableCollection<Song>();
 			SongListBox.ItemsSource = Songs;
+
+			VolumnProgressBar.Value = musicMediaElement.Volume * 100;
 		}
 
 		void _updateProgressBarTimer_Tick(object sender, object e)
@@ -97,14 +95,13 @@ namespace Hadows.Component
 			musicMediaElement.Play();
 		}
 
-		async void _PlayMusicAsync()
+		async void _SetSource()
 		{
 			if (CurrentSong == null)
 				return;
 
 			var stream = await CurrentSong.StorageFile.OpenAsync(FileAccessMode.Read);
 			musicMediaElement.SetSource(stream, CurrentSong.StorageFile.ContentType);
-			//musicMediaElement.Play();
 		}
 
 
@@ -164,6 +161,12 @@ namespace Hadows.Component
 
 		void ForwardButton_Click(object sender, RoutedEventArgs e)
 		{
+			if (SongListBox.Items == null ||
+				SongListBox.Items.Count <= 0)
+			{
+				return;
+			}
+
 			++_currentIndex;
 			if (_currentIndex > SongListBox.Items.Count - 1)
 			{
@@ -175,6 +178,12 @@ namespace Hadows.Component
 
 		void PrevButton_Click(object sender, RoutedEventArgs e)
 		{
+			if (SongListBox.Items == null ||
+				SongListBox.Items.Count <= 0)
+			{
+				return;
+			}
+
 			--_currentIndex;
 			if (_currentIndex < 0)
 			{
@@ -186,7 +195,7 @@ namespace Hadows.Component
 
 		void PlayButton_Checked(object sender, RoutedEventArgs e)
 		{
-			_PlayMusicAsync();
+			_SetSource();
 		}
 
 		void PlayButton_Unchecked(object sender, RoutedEventArgs e)
@@ -200,7 +209,7 @@ namespace Hadows.Component
 		}
 
 		void musicMediaElement_CurrentStateChanged(object sender, RoutedEventArgs e)
-		 {
+		{
 			if (musicMediaElement.CurrentState == MediaElementState.Playing)
 			{
 				_updateProgressBarTimer.Start();
@@ -230,47 +239,18 @@ namespace Hadows.Component
 			_currentIndex = senderListBox.SelectedIndex;
 			CurrentSong = e.AddedItems[0] as Song;
 
-			_PlayMusicAsync();
+			_SetSource();
 		}
 
 
 
 		public string ThumbnailName { get; set; }
-		
-		#region string DisplayName
-		private string _displayName;
-		public string DisplayName
-		{
-			get
-			{
-				return _displayName;
-			}
-			set
-			{
-				_displayName = value;
-				OnPropertyChanged("DisplayName");
-			}
-		}
-		#endregion string DisplayName
-		
+		public string DisplayName { get; set; }
 		public double SnappedStateHeight { get; set; }
 		public FrameworkElement GetInstance()
 		{
 			return new AudioPlayer();
 		}
-
-		#region ▶ INotifyPropertyChanged
-		public event PropertyChangedEventHandler PropertyChanged;
-		public void OnPropertyChanged(string propertyName)
-		{
-			PropertyChangedEventHandler handler = PropertyChanged;
-			if (handler == null)
-			{
-				return;
-			}
-			handler.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
-		#endregion INotifyPropertyChanged
 
 		public void Dispose()
 		{

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Hadows.Control;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -14,20 +9,19 @@ namespace Hadows.MyWindow
 	{
 		//-------------------------- ▶ Constants
 		private const double _FULL_SIZE_VIEW_MIN_WIDTH = 501;
+		private const double _DEFAULT_MIN_HEIHGT = 400;
 
 
 		//-------------------------- ▶ Members
 		StackPanel _snappedSizePanel;
 		Grid _fullSizePanel;
-		bool _isFullSizeMode;
-		bool _isLoadedItem;
+		bool _isLoadedItem = false;
 
 
 
 		//-------------------------- ▶ Constructors
 		public WindowPage()
 		{
-			_Init();
 			_LinkEvents();
 		}
 
@@ -40,10 +34,6 @@ namespace Hadows.MyWindow
 			this.SizeChanged += WindowPage_SizeChanged;
 		}
 
-		void _Init()
-		{
-			_isLoadedItem = false;
-		}
 
 		//-------------------------- ▶ EventHandlers
 		void WindowPage_SizeChanged(object sender, Windows.UI.Xaml.SizeChangedEventArgs e)
@@ -52,8 +42,7 @@ namespace Hadows.MyWindow
 				return;
 
 
-			if (this.ActualWidth < _FULL_SIZE_VIEW_MIN_WIDTH &&
-				this._isFullSizeMode == true)
+			if (this.ActualWidth < _FULL_SIZE_VIEW_MIN_WIDTH)
 			{
 				for (int i = _fullSizePanel.Children.Count - 1; i >= 0; i--)
 				{
@@ -69,16 +58,15 @@ namespace Hadows.MyWindow
 					temp.Height = temp.GetComponentSnappedHeight();
 					if (double.IsNaN(temp.Height) == true)
 					{
-						temp.Height = 0;
+						temp.Height = _DEFAULT_MIN_HEIHGT;
 					}
 
 					_snappedSizePanel.Children.Insert(0, temp);
 				}
+
 				VisualStateManager.GoToState(this, "SnappedSizeState", false);
-				this._isFullSizeMode = false;
 			}
-			else if (this.ActualWidth > _FULL_SIZE_VIEW_MIN_WIDTH &&
-				this._isFullSizeMode == false)
+			else
 			{
 				for (int i = _snappedSizePanel.Children.Count - 1; i >= 0; i--)
 				{
@@ -87,8 +75,8 @@ namespace Hadows.MyWindow
 					_snappedSizePanel.Children.RemoveAt(i);
 					_fullSizePanel.Children.Add(temp);
 				}
+
 				VisualStateManager.GoToState(this, "FullSizeState", false);
-				this._isFullSizeMode = true;
 			}
 		}
 
@@ -96,9 +84,10 @@ namespace Hadows.MyWindow
 		{
 			_fullSizePanel = (this.Content as Panel).Children[0] as Grid;
 			_snappedSizePanel = ((this.Content as Panel).Children[1] as ScrollViewer).Content as StackPanel;
-			_isFullSizeMode = true;
+
 			Debug.Assert(_snappedSizePanel != null);
 			Debug.Assert(_fullSizePanel != null);
+
 			_isLoadedItem = true;
 		}
 
